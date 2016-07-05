@@ -13,7 +13,7 @@ class MyRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 def Run():    
     Handler = MyRequestHandler
     
-    PORT=3004
+    PORT=3006
     server = SocketServer.TCPServer(('', PORT), Handler)
     
     webbrowser.open(url="http://127.0.0.1:{0}/".format(PORT), new=1)
