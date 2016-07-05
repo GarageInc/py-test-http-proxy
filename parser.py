@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+#!/usr/bin/env python
 
 from HTMLParser import HTMLParser
 from htmlentitydefs import name2codepoint
@@ -40,17 +41,17 @@ class PageParser(HTMLParser):
         self.html += "/>"
 
     def handle_data(self, data):
-	print "-------------------------------------"
 
-        old_data = data.decode('utf-8')
+        old_data = data
 
 	if self.is_style == True:
 	    self.is_style = False
 	    self.html += old_data
 	    return 
 
-	new_data = ""
-	counter = 6
+	new_data = u""
+	WORD_MAX_LENGTH = 6
+	word_length = 0
 
 	ord_en_start = ord('A')
 	ord_en_end = ord('z')
@@ -61,29 +62,19 @@ class PageParser(HTMLParser):
 
 	for symbol in old_data:
 
-	    if is_word_end==True:
-		is_word_end = False
-
-		if counter == 0:
-                    new_data += "*"
-#                   new_data += "™".decode('utf-8')
-
-		if counter <= 0:
-		    counter = 6
-
-	    new_data += symbol		
 	    ordSymbol = ord(symbol)
 
-	    if (counter<6 and symbol=='-') or (ord_en_start < ordSymbol and ordSymbol < ord_en_end) or (ord_ru_start < ordSymbol and ordSymbol < ord_ru_end):
-		counter = counter - 1
+	    if (word_length < WORD_MAX_LENGTH and symbol == '-') or (ord_en_start < ordSymbol and ordSymbol < ord_en_end) or (ord_ru_start < ordSymbol and ordSymbol < ord_ru_end):
+		word_length = word_length + 1
 	    else:
-		is_word_end = True
+                if word_length == WORD_MAX_LENGTH:
+                    new_data += u'™'
+
+                word_length = 0
+
+	    new_data += symbol
 		
         self.html += new_data
-
-    def handle_entityref(self, name):
-        c = unichr(name2codepoint[name])
-        self.html += c
 
     def handle_charref(self, name):
         if name.startswith('x'):
@@ -101,28 +92,26 @@ class Page(object):
     def __init__(self, url, fp):
         self.url = url
         self.fp = fp
+
 	dir = "site"
 	shutil.rmtree( dir )
+
         self.fileRoot = dir
         self.siteRoot = "http://" + sys.argv[1]
 
     def save(self):
         url = self.url
-        #add and update fp if necessary
         url = re.sub("{fp}", self.fp, url)
         last = url.rfind("/")
+        
         self.fp = url[:last]
-        #prep filepath
+        
         filepath = url.split("/")
-        #final url
-        url = self.siteRoot +"/" + url
-        #case for the index page
 
         if len(filepath) == 1 and not filepath[0]:
             filepath.append("index.html")
         filename = filepath[-1]
 
-        #create filepath to save on disk
         if not filepath[0]:
             filepath = os.path.join(self.fileRoot, *filepath[1:-1])
         else:
@@ -131,18 +120,18 @@ class Page(object):
         if not os.path.exists(filepath):
             os.makedirs(filepath)
 
-        #final write path
         filepath = os.path.join(filepath, filename)
 
         f = open(filepath, 'w')
 
-        r = urllib2.urlopen(url)
+        r = urllib2.urlopen(self.siteRoot +"/" + url)
 
         if ".html" in filename:
             parser = PageParser()
 
             parser.feed( r.read() )
-            html = parser.html.encode('ascii', 'replace')
+#            html = parser.html.encode('ascii', 'ignore')
+	    html = parser.html.encode('utf-8')
 
  	    f.write( html )
             f.close()
@@ -159,11 +148,7 @@ if __name__ == '__main__':
 
         page.save()
         
-        print "End parsing"
-        
         browser.Run()        
-        
-        print "Browser runned"
     else:
 
         print "Usage: python" , sys.argv[0], "www.example.com"
