@@ -10,17 +10,12 @@ class MyRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
         return SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
 
-PORT=3003
-Handler = MyRequestHandler
-server = SocketServer.TCPServer(('', PORT), Handler)
-
-print("loading...")
-#server.serve_forever()
-print("end")
-
-
-new = 2 # open in a new tab, if possible
-url="http://127.0.0.1:{0}/".format(PORT)
-webbrowser.open(url=url,new=new)
-
-server.serve_forever()
+def Run():    
+    Handler = MyRequestHandler
+    
+    PORT=3004
+    server = SocketServer.TCPServer(('', PORT), Handler)
+    
+    webbrowser.open(url="http://127.0.0.1:{0}/".format(PORT), new=1)
+    
+    server.serve_forever()

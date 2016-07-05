@@ -4,6 +4,8 @@ import os
 import re
 import sys
 import urllib2
+import browser
+import shutil
 
 class PageParser(HTMLParser):
 
@@ -13,21 +15,11 @@ class PageParser(HTMLParser):
         self.urls = []
 
     def handle_starttag(self, tag, attrs):
-
         self.html += "<" + tag + " "
 
         for attr in attrs:
-
-            if attr[0] == 'href':
-                if attr[1].startswith(".."):
-                    self.urls.append(attr[1][3:])
-                elif attr[1].startswith("http://"):
-                    None
-                elif attr[1].startswith("/"):
-                    self.urls.append("{fp}" + attr[1])
-                else:
-                    self.urls.append("{fp}/" + attr[1])
             self.html += attr[0] + "=\"" + attr[1] + "\" "
+            
         self.html += ">"
 
     def handle_endtag(self, tag):
@@ -35,28 +27,14 @@ class PageParser(HTMLParser):
 
     def handle_startendtag(self, tag, attrs):
         self.html += "<" + tag + " "
+
         for attr in attrs:
-            if attr[0] == 'href':
-                #relative to root
-                if attr[1].startswith(".."):
-                    self.urls.append(attr[1][3:])
-                #outbound links
-                elif attr[1].startswith("http://"):
-                    None
-                #links going deeper
-                elif attr[1].startswith("/"):
-                    self.urls.append("{fp}" + attr[1])
-                #same directory as current link
-                else:
-                    self.urls.append("{fp}/" + attr[1])
             self.html += attr[0] + "=\"" + attr[1] + "\" "
+
         self.html += "/>"
 
     def handle_data(self, data):
         self.html += data.decode('utf-8')
-
-    def handle_comment(self, data):
-        self.html += "<!--" + data + "-->"
 
     def handle_entityref(self, name):
         c = unichr(name2codepoint[name])
@@ -78,7 +56,9 @@ class Page(object):
     def __init__(self, url, fp):
         self.url = url
         self.fp = fp
-        self.fileRoot = "site"
+	dir = "site"
+	shutil.rmtree( dir )
+        self.fileRoot = dir
         self.siteRoot = "http://" + sys.argv[1]
 
     def save(self):
@@ -115,7 +95,6 @@ class Page(object):
 
         r = urllib2.urlopen(url)
 
-	print "start..."
 
         if ".html" in filename:
             parser = PageParser()
@@ -123,7 +102,7 @@ class Page(object):
             parser.feed( r.read() )
             html = parser.html.encode('ascii', 'replace')
 
-	    f.write( html )
+ 	    f.write( html )
             f.close()
         else:
             f.write( r.read() )
@@ -135,10 +114,14 @@ if __name__ == '__main__':
     if len(sys.argv) == 2:
 
         page = Page("", "")
-	print("parsed")
 
         page.save()
-	print("saved")
+        
+        print "End parsing"
+        
+        browser.Run()        
+        
+        print "Browser runned"
     else:
 
         print "Usage: python" , sys.argv[0], "www.example.com"
