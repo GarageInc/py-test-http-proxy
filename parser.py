@@ -81,9 +81,6 @@ class Page(object):
         self.fileRoot = "site"
         self.siteRoot = "http://" + sys.argv[1]
 
-    def blablabla(self):
-	print("blablabla")
-
     def save(self):
         url = self.url
         #add and update fp if necessary
@@ -95,7 +92,8 @@ class Page(object):
         #final url
         url = self.siteRoot +"/" + url
         #case for the index page
-        if len(filepath) ==1 and not filepath[0]:
+
+        if len(filepath) == 1 and not filepath[0]:
             filepath.append("index.html")
         filename = filepath[-1]
 
@@ -115,26 +113,18 @@ class Page(object):
         #write to file
         f = open(filepath, 'w')
 
-        print "Processing:" , url
-
         r = urllib2.urlopen(url)
 
 	print "start..."
 
         if ".html" in filename:
             parser = PageParser()
-	    print(r)
+
             parser.feed( r.read() )
             html = parser.html.encode('ascii', 'replace')
-            print("blabla")
-	    print(html)
-	    print(parser.urls)
+
 	    f.write( html )
             f.close()
-
-#            for url in parser.urls:
- #               nextPage = Page(url, self.fp)
-  #              nextPage.save()
         else:
             f.write( r.read() )
             f.close()
